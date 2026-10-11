@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Font-Romeu 3D</title>
+  <meta name="description" content="Carte interactive en relief de la station de ski Font-Romeu Pyrénées 2000 : pistes, remontées mécaniques, ski de fond, raquettes et profils altimétriques.">
+  <meta name="theme-color" content="#14273d">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2314273d'/%3E%3Cpath d='M3 25 12 10l5 8 3-4 9 11Z' fill='%23fff'/%3E%3Ccircle cx='24' cy='8' r='3.5' fill='%23ffb000'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/maplibre-gl.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="map" aria-label="Carte en relief de la station"></div>
+
+  <!-- Panneau latéral : présentation, filtres et liste -->
+  <aside id="panel" class="panel" data-state="peek" aria-label="Pistes et remontées">
+    <button id="panel-handle" class="panel-handle" type="button" aria-expanded="false" aria-controls="panel-body">
+      <span class="handle-bar" aria-hidden="true"></span>
+      <span class="sr-only">Afficher ou masquer la liste</span>
+    </button>
+    <header class="panel-head">
+      <p class="eyebrow">Pyrénées-Orientales · Cerdagne</p>
+      <h1>Font-Romeu <span>Pyrénées 2000</span></h1>
+      <dl class="facts" id="facts"></dl>
+    </header>
+
+    <div id="panel-body" class="panel-body">
+      <div class="difficulty-filter" role="group" aria-label="Filtrer par difficulté" id="difficulty-filter"></div>
+
+      <div class="tabs" role="tablist" aria-label="Catégories">
+        <button role="tab" id="tab-pistes" aria-selected="true" aria-controls="list" data-tab="pistes" type="button">Pistes</button>
+        <button role="tab" id="tab-lifts" aria-selected="false" aria-controls="list" data-tab="lifts" type="button">Remontées</button>
+        <button role="tab" id="tab-nordic" aria-selected="false" aria-controls="list" data-tab="nordic" type="button" title="Ski de fond et raquettes">Nordique</button>
+      </div>
+
+      <div class="list-tools">
+        <label class="search">
+          <span class="sr-only">Rechercher</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 4a6.5 6.5 0 0 1 5.17 10.44l4.45 4.45-1.41 1.41-4.45-4.45A6.5 6.5 0 1 1 10.5 4Zm0 2a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9Z"/></svg>
+          <input id="search" type="search" placeholder="Piste ou remontée…" autocomplete="off">
+        </label>
+        <label class="sort">
+          <span class="sr-only">Trier par</span>
+          <select id="sort">
+            <option value="default">Catégorie</option>
+            <option value="length">Longueur</option>
+            <option value="drop">Dénivelé</option>
+            <option value="top">Altitude</option>
+            <option value="name">Nom</option>
+          </select>
+        </label>
+      </div>
+
+      <ul id="list" class="list" role="tabpanel" aria-labelledby="tab-pistes"></ul>
+
+      <footer class="panel-foot">
+        <p id="data-note"></p>
+      </footer>
+    </div>
+  </aside>
+
+  <!-- Commandes de la carte -->
+  <div class="toolbar" role="toolbar" aria-label="Vue">
+    <button id="btn-3d" type="button" class="tool" aria-pressed="true" title="Basculer vue 3D / vue de dessus">3D</button>
+    <button id="btn-tour" type="button" class="tool" aria-pressed="false" title="Tour panoramique de la station">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5V2L8 6l4 4V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7Z"/></svg>
+      <span class="sr-only">Tour panoramique</span>
+    </button>
+    <button id="btn-home" type="button" class="tool" title="Revenir à la vue d'ensemble">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 12h3v8h5v-5h4v5h5v-8h3L12 3Z"/></svg>
+      <span class="sr-only">Vue d'ensemble</span>
+    </button>
+    <button id="btn-layers" type="button" class="tool" aria-expanded="false" aria-controls="layers" title="Fonds de carte et calques">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 10 5.5-10 5.5L2 8.5 12 3Zm-7.9 9.6L12 17l7.9-4.4L22 13.8 12 19.3 2 13.8l2.1-1.2Z"/></svg>
+      <span class="sr-only">Calques</span>
+    </button>
+  </div>
+
+  <section id="layers" class="layers" aria-label="Fonds de carte et calques" hidden>
+    <h2>Fond de carte</h2>
+    <div class="basemaps" role="radiogroup" aria-label="Fond de carte" id="basemaps"></div>
+
+    <h2>Relief</h2>
+    <label class="switch"><input type="checkbox" id="opt-terrain" checked><span>Relief 3D</span></label>
+    <label class="range" for="opt-exaggeration">
+      <span>Exagération <output id="exaggeration-value">×1,5</output></span>
+      <input type="range" id="opt-exaggeration" min="1" max="2.5" step="0.1" value="1.5">
+    </label>
+    <label class="switch"><input type="checkbox" id="opt-hillshade" checked><span>Ombrage du relief</span></label>
+    <label class="switch"><input type="checkbox" id="opt-contours" checked><span>Courbes de niveau</span></label>
+
+    <h2>Domaine</h2>
+    <label class="switch"><input type="checkbox" id="opt-pistes" checked><span>Pistes alpines</span></label>
+    <label class="switch"><input type="checkbox" id="opt-lifts" checked><span>Remontées mécaniques</span></label>
+    <label class="switch"><input type="checkbox" id="opt-nordic" checked><span>Ski de fond</span></label>
+    <label class="switch"><input type="checkbox" id="opt-hike"><span>Itinéraires raquettes</span></label>
+    <label class="switch"><input type="checkbox" id="opt-pois" checked><span>Sommets, restaurants, parkings</span></label>
+
+    <h2>Légende</h2>
+    <ul class="legend" id="legend"></ul>
+  </section>
+
+  <!-- Fiche de l'élément sélectionné -->
+  <article id="details" class="details" aria-live="polite" hidden></article>
+
+  <div class="statusbar" aria-live="off">
+    <span id="cursor-alt">Survolez la carte pour lire l'altitude</span>
+  </div>
+
+  <div id="loading" class="loading" role="status">Chargement du relief…</div>
+
+  <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/maplibre-contour@0.1.0/dist/index.min.js"></script>
+  <script src="data/font-romeu.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
