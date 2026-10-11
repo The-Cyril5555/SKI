@@ -23,7 +23,7 @@
   const IGN_ATTRIB = '<a href="https://www.ign.fr/" target="_blank" rel="noopener">© IGN – Géoplateforme</a>';
 
   const HOME = { center: [2.0385, 42.5275], zoom: 13.75, pitch: 58, bearing: -14 };
-  const HOME_MOBILE = { center: [2.0385, 42.5265], zoom: 13.15, pitch: 58, bearing: -30 };
+  const HOME_MOBILE = { center: [2.0395, 42.5262], zoom: 12.75, pitch: 58, bearing: -24 };
   const FLIGHT = { zoom: 15.2, pitch: 63 }; // caméra des descentes / montées virtuelles
   const DEFAULT_EXAGGERATION = 1.5;
 
